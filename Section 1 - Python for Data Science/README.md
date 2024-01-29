@@ -26,7 +26,7 @@ The Jupyter notebooks for this section are in this folder. We will first clone t
 In **terminal**, clone the repository for all ORIE4741 sections by
 
 ```
-git clone https://github.com/ORIE4741/section.git
+https://github.com/Haiyun-Cornell/Spring-2024-ORIE-4741-5741.git
 ```
 
 There will be a cloned folder named "section" in your local computer at the current path.
