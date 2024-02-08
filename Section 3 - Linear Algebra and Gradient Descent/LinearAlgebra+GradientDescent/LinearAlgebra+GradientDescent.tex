@@ -1,0 +1,488 @@
+% We will use these notes to scribe the lectures in ECE6980. 
+
+% Please fill in your details at appropriate places
+
+\documentclass[11pt]{article}
+
+\usepackage{fullpage}
+\usepackage{amsmath,amssymb,amsthm,amsfonts,latexsym,bbm,xspace,graphicx,float,mathtools,
+verbatim} 
+\usepackage{setspace}
+%\providecommand{\tabularnewline}{\\}
+
+
+\setlength\parindent{0pt}
+
+%\usepackage{psfig}
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=none
+]{biblatex}
+\addbibresource{scholar.bib}
+
+\newcommand{\xv}{\mathbf{x}}
+\newcommand{\Xv}{\mathbf{X}}
+\newcommand{\uv}{\mathbf{u}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\Av}{\mathbf{A}}
+\newcommand{\Bv}{\mathbf{B}}
+\newcommand{\Iv}{\mathbf{I}}
+
+
+\input{glodef} 
+\begin{document}
+
+\thispagestyle{empty}
+\framebox{
+\vbox{
+\begin{center}
+\bf\large ORIE 4741/5741 \\
+Learning with Big Messy Data
+\end{center}
+
+\noindent
+Instructor: Haiyun He
+\hfill Discussion \#3: More Linear Algebra + Gradient Descent\\
+TA:  \hfill March 6th, 2023} 
+\medskip
+}
+\noindent
+
+\bigskip
+
+
+
+\section{Notations}
+\begin{enumerate}[label=(\alph*)]
+\item Capital letters, e.g. $A$, $X$: Matrices.
+\item Small letters, $x$, $w$: Column vectors.
+\item Small letters with subscripts, e.g. $x_i$, $w_j$, $a_{ij}$: Entries of vectors or matrices. 
+\item Letters with superscript "*", e.g. $p^{*}$, $f^{*}$, $x^{*}$: Function or independent variable values at the optimal point.
+
+\end{enumerate}
+
+\section{Basic Linear Algebra}
+
+In the following, vectors (bold, lower-case) have length $d$, square matrices have size $d \times d$, and other matrices have arbitrary dimensions as long as the sizes in the multiplications are consistent.
+
+\begin{itemize}
+	\item \underline{Inner product}: $\langle \uv, \vv \rangle = \uv^T \vv = \vv^T \uv = \sum_{i=1}^d u_i v_i$  (here and below, $(\cdot)^T$ means transpose)
+	\begin{itemize}
+		\item We say that $\uv$ and $\vv$ are \underline{orthogonal} if $\langle \uv, \vv \rangle = 0$ (Visually: At right angles from each other)
+		\item More generally, $\langle \uv, \vv \rangle = \|\uv\| \cdot \|\vv\| \cdot \cos({\rm angle}(\uv,\vv))$ (maximized when they point in the same direction, as negative as possible when they point in opposite directions)
+		\item \underline{Cauchy-Schwartz inequality}: $|\langle \uv, \vv \rangle| \le \|\uv\| \cdot \|\vv\|$ with equality if $\uv = c \vv$ for some constant $c$.
+	\end{itemize}
+	\item \underline{(Euclidean) norm}: $\| \uv \| = \sqrt{ \langle \uv, \uv \rangle } = \sqrt{\sum_{i=1}^d u_i^2}$
+	\begin{itemize}
+		\item {Triangle inequality}: $\|\uv + \vv\| \le \|\uv\| + \|\vv\|$
+		\item {Expansion}: $\|\uv + \vv\|^2 = \|\uv\|^2 + 2\langle \uv,\vv \rangle + \|\vv\|^2$
+	\end{itemize}
+	\item \underline{Transpose operations}:
+	\begin{itemize}
+		\item $(\Av\Bv)^T = \Bv^T \Av^T$
+		\item $(\Av + \Bv)^T = \Av^T + \Bv^T$ (Note: The analogous property certainly doesn't hold in general for the matrix inverse, defined below)
+	\end{itemize}
+	\item The \underline{identity matrix} is a square matrix with $1$'s on the diagonal, and $0$'s elsewhere.  Then $\Av\Iv = \Iv\Av = \Av$. 
+	\item \underline{Matrix inverse} (of a $d \times d$ square matrix): $\Av \Av^{-1} = \Av^{-1} \Av = \Iv_d$, where $\Iv_d$ is the $d \times d$ identity matrix
+	\begin{itemize}
+		\item The inverse exists only for {\em invertible} matrices
+		\item $(\Av\Bv)^{-1} = \Bv^{-1} \Av^{-1}$
+	\end{itemize}
+	\item \underline{Trace} (of a $d \times d$ square matrix): ${\rm Tr}[\Av] = \sum_{i=1}^d A_{ii}$ (i.e., sum of diagonal entries)
+	\begin{itemize}
+		\item Useful property: ${\rm Tr}[\Av\Bv] = {\rm Tr}[\Bv\Av]$
+		\item Special case (let $\Av = \uv$ and $\Bv = \uv^T$): $\|\uv\|^2 = {\rm Tr}[\uv\uv^T]$
+	\end{itemize}
+	\item A $d \times d$ square matrix $\Av$ is said to be \underline{positive semidefinite} if $\xv^T \Av \xv \ge 0$ for all $\xv \in \mathbb{R}^d$
+	\begin{itemize}
+		\item It is \underline{positive definite} if the only case that equality holds (i.e., $\xv^T \Av \xv = 0$) is the case $\xv = \boldsymbol{0}$.
+		\item Being positive semidefinite is equivalent to all \underline{eigenvalues} being non-negative (you will not be assessed on questions involving eigenvalues/eigenvectors, but these concepts are also useful).
+		Being positive definite is equivalent to all eigenvalues being positive.
+		\item Positive definite matrices are always invertible (but positive semidefinite matrices may not be, e.g., consider the all-zero matrix)
+		\item The positive semidefinite (respectively, positive definite) property implies that $\det(\Av) \ge 0$ (respectively, $\det(\Av) > 0$), where $\det(\cdot)$ is the determinant.  However, matrices with a positive determinant still might fail to be positive semidefinite (e.g., $\Av = -\Iv$ when $d=2$).
+	\end{itemize}
+	\item The general definition of \underline{determinant} will not be needed in this course, but you should at least know the formula for the $2 \times 2$ case: $\det\left( \left[ \begin{array}{cc}
+		a & b\\
+		c & d \\
+	\end{array} \right]  \right) = ad - bc$.
+\end{itemize}
+
+
+\section{Some Linear Algebra Conclusions}
+\subsection{($Ax=0 \Leftrightarrow x=0$) $\xLeftrightarrow{\text{(a)}}$ $A$ has full column rank $\xLeftrightarrow{\text{(b)}}$ $A^{T}A$ is invertible}
+This is the prerequisite for pseudoinverse. Namely, if a matrix $A$ has full column rank, then we can explicitly write out its pseudoinverse that contains $(A^{T}A)^{-1}$.\\
+
+We will first show the correctness of 2.1(a).
+\begin{proof}
+Let $A$ be an $m \times n$ matrix. Write $A$ as the concatenation of column vectors $(a_1, a_2, \cdots, a_n)$. $Ax=0$ can then be written as $\sum_{i=1}^n a_i x_i=0$. Thus ($Ax=0 \Leftrightarrow x=0$) is equivalent to the columns of $A$ being linearly independent, i.e. $A$ has full column rank.
+\end{proof}
+For 2.1(b):
+\begin{proof}
+$A^{T}A$ is an $n \times n$ symmetric matrix, thus $A^{T}A$ being invertible is equivalent to $A^{T}A$ having full column rank. From 2.1(a), we know this is equivalent to ($A^{T}Ax=0 \Leftrightarrow x=0$). From this we can prove 2.1(b) by proving a stronger equivalence $Ax=0 \xLeftrightarrow{\text{(c)}} A^{T}Ax=0$, i.e. these two equations have the same solution space. Thus we are now going to prove equivalence (c).\\
+
+It is evident that $Ax=0 \Rightarrow A^{T}Ax=0$. As for the other direction, we left multiply $x^{T}$ on both sides of $A^{T}Ax=0$ to get $x^{T}A^{T}Ax=0$. \\
+
+Note this is equivalent to $(Ax)^{T}Ax=0$, namely $||Ax||_2^2=0$. From the norm property that $||x||=0 \Leftrightarrow x=0$, we get $Ax=0$, which completes the proof.
+\end{proof}
+
+\subsection{$y \in \text{range}(X)$, then $X X^{\dagger}y = y$}
+Recall that when an $n \times d$ matrix $X$ has full column rank, then X's pseudoinverse $X^{\dagger}=(X^{T}X)^{-1}X^{T}$. Thus we have its properties
+\begin{enumerate}[label=(\alph*)]
+\item $X^{\dagger}X=I_d$
+\item $XX^{\dagger} \neq I_n$ (Here "$\neq$" means not always equal)
+\end{enumerate}
+Now we are going to prove 2.2.
+\begin{proof}
+$\text{Range}(X) \triangleq \{Xv|v \in \mathbb{R}^d\}$. Thus $y \in \text{range}(X)$ means $\exists z \in \mathbb{R}^d$, s.t. $Xz=y$. We left multiply $XX^{\dagger}$ to both sides and get $XX^{\dagger}Xz=XX^{\dagger}y$. Using property (a), the left-hand side equals $Xz$, which equals $y$, thus we get $X X^{\dagger}y = y$.
+\end{proof}
+
+Now we discuss the intuitive understanding of this equality. \\
+
+Matrices can be regarded as linear operators, which can map one vector to the other through the matrix-vector multiplication. Property (a) says the effect of first imposing operator $X$ and then $X^{\dagger}$ on \textbf{any} vector is equivalent to the effect of an identity map. While given property (b), we know first imposing $X^{\dagger}$ and then $X$ on a vector may not get the original vector, which corresponds to this "inverse" being "pseudo"; however, from 2.2, we know we can return to the original vector when this vector is in the range (or column space) of $X$. 
+
+\subsection{$\frac{\partial (w^{T}v)}{\partial w}$ and $\frac{\partial (w^{T}Aw)}{\partial w}$}
+When performing gradient descent to the least squares problem, we need to calculate $\nabla_w ||y-Xw||^2 = \nabla_w (y^{T}y-y^{T}Xw-w^{T}X^{T}y+w^{T}X^{T}Xw)$. The partial derivatives in the above forms occur in this gradient.\\
+
+Recall the definition of gradient. Let $f(x_1, x_2, ...,x_n)$ be a multivariate scalar function. The gradient of $f$, $\nabla f$, is the multivariate generalization of the derivative of $f$. The gradient is a vector, where each entry corresponds to a partial derivative with respect to a variable of the function.
+    \begin{center}
+    $\nabla f =$
+    $\begin{bmatrix}
+    \frac{\partial f}{\partial x_1} \\ 
+    \frac{\partial f}{\partial x_2} \\ . \\.\\.\\
+    \frac{\partial f}{\partial x_n}\\
+    \end{bmatrix}$
+    \end{center}
+  
+Let $w,v \in \mathbb{R}^n$, $A \in \mathbb{R}^{n \times n}$ in the following context. 
+ 
+\subsubsection{$\frac{\partial (w^{T}v)}{\partial w}$}
+
+We explicitly write out the summation for calculating $w^{T}v$: $w^{T}v = \sum_{i=1}^n w_i v_i$. \\
+
+Now consider the \textit{k}th ($k \in \{1, 2, \cdots, n\}$) component in gradient, namely $\frac{\partial (\sum_{i=1}^n w_i v_i)}{\partial w_k}$. Only the term with $i = k$ contributes to this partial derivative. Thus $$\frac{\partial (\sum_{i=1}^n w_i v_i)}{\partial w_k} = \frac{\partial (w_k v_k)}{\partial w_k} = v_k $$ \\
+
+Then, concatenating the results of the partial derivatives on different $k$, we get
+    \begin{center}
+    $\frac{\partial (w^{T}v)}{\partial w} =$
+    $\begin{bmatrix}
+    v_1\\ 
+    v_2 \\ . \\.\\.\\
+    v_n\\
+    \end{bmatrix}  = v$ 
+    \end{center}
+
+\subsubsection{$\frac{\partial (w^{T}Aw)}{\partial w}$}
+Similarly, we consider the \textit{k}th component in gradient, namely $\frac{\partial (\sum_{i=1}^n \sum_{j=1}^n w_i a_{ij} w_j)}{\partial w_k}$. Only the terms with $i = k$ or $j = k$ will contribute to this partial derivative. Thus 
+\begin{equation}
+\begin{split}
+\frac{\partial (\sum_{i=1}^n \sum_{j=1}^n w_i a_{ij} w_j)}{\partial w_k} & = \underbrace{\frac{\partial (\sum_{j = 1, j \neq k}^n w_k a_{kj} w_j)}{\partial w_k}}_{i = k, j \neq k}+\underbrace{\frac{\partial (\sum_{i = 1, i \neq k}^n w_i a_{ik} w_k)}{\partial w_k}}_{j = k, i \neq k} + \underbrace{\frac{\partial {a_{kk} w_k^2}}{\partial w_k}}_{i=j=k} \\
+&= \sum_{j = 1, j \neq k}^n a_{kj} w_j+ \sum_{i = 1, i \neq k}^n w_i a_{ik} + 2 a_{kk}w_k\\
+&=\sum_{j = 1}^n a_{kj} w_j+ \sum_{i = 1}^n w_i a_{ik}
+\end{split}
+\end{equation}
+
+Denote the $i$th row and $j$th column of matrix $A$ as $A_{i:}$ and $A_{:j}$, respectively. Let $B = A^{T}$. Thus $$\sum_{j = 1}^n a_{kj} w_j = A_{k:}w$$ $$ \sum_{i = 1}^n w_i a_{ik} = w^{T}A_{:k} = B_{k:} w$$ \\
+
+Finally, concatenating the results of the partial derivatives on different $k$, we get
+    \begin{center}
+    $\frac{\partial (w^{T}Aw)}{\partial w} =$
+    $\begin{bmatrix}
+    A_{1:}+B_{1:}\\ 
+    A_{2:}+B_{2:} \\ . \\.\\.\\
+    A_{n:}+B_{n:}\\
+    \end{bmatrix} w = (A+B)w = (A+A^{T})w$ 
+    \end{center}
+which completes the calculation.\\
+
+More conclusions regarding derivatives with respect to matrices can be found in \textit{The Matrix Cookbook}\cite{petersen2008matrix}.
+
+\section{Other Basics}
+
+\begin{itemize}
+	\item {\bf Basic properties of logarithms and exponentials:}
+	\begin{itemize}
+		\item $\log (x y)$ = $\log x + \log y$    
+		\item $\log \frac{1}{x} = - \log x$
+		\item $\log \frac{y}{x} = \log y - \log x$
+		\item $\log x^c = c \log x$
+		\item $\log_a x = \frac{\log_b x}{\log_b a}$
+		% \item $\log_e x \le x - 1$ with equality if and only if $x = 1$
+		\item $e^{a+b} = e^a e^b$
+		\item $(e^{a})^b = e^{ab}$
+		\item $e^{\log x} = \log e^x = x$ (for $\log$ having base $e$)
+	\end{itemize}
+	
+	\item {\bf Basic calculus:}
+	\begin{itemize}
+		\item $\frac{d}{dx} x^c = c x^{c-1}$
+		\item $\frac{d}{dx} e^{cx} = c e^{cx}$
+		\item $\frac{d}{dx} \log x = \frac{1}{x}$ (Note: Assume $\log(\cdot)$ has base $e$ except where indicated otherwise)
+		\item \underline{Chain rule}: $\frac{d}{dx} f(g(x)) = f'( g(x) ) \, g'(x)$
+		\item \underline{Product rule}: $\frac{d}{dx} (f(x)g(x)) = f'(x)g(x) + f(x)g'(x)$
+		\item \underline{Quotient rule}: $\frac{d}{dx} (f(x)/g(x)) = \frac{ f'(x)g(x) - f(x)g'(x) }{g(x)^2} $
+	\end{itemize}
+\end{itemize}
+
+\section{The Least Squares Problem}
+\subsection{Convexity}
+For more details on this part, refer to Chapter 3 of \textit{Convex Optimization} by Boyd \& Vandenberghe \cite{boyd2004convex}.
+\begin{definition}
+A function $f: \mathbb{R}^n \rightarrow \mathbb{R}$ being convex if the domain of $f$ (denoted as $\textbf{dom}(f)$) is a convex set and $\forall x, y \in \textbf{dom}(f)$ and $\theta \in [0,1]$, $f(\theta x + (1- \theta)y) \leq \theta f(x) + (1- \theta)f(y)$.
+\end{definition}
+This is also called the Jensen's Inequality, or the zeroth-order convexity condition.\\
+
+Equivalently, the first-order convexity condition is: 
+\begin{theorem}(First-order Convexity Condition)
+Suppose a function $f: \mathbb{R}^n \rightarrow \mathbb{R}$ is differentiable in $\textbf{dom}(f)$. Then $f$ is convex if and only if $\textbf{dom}(f)$ is convex and $\forall x, y \in \textbf{dom}(f)$, $f(y) \geq f(x) + \nabla f(x)^{T}(y-x)$.
+\end{theorem}
+And we also have the second-order convexity condition:
+\begin{theorem}(Second-order Convexity Condition)
+Suppose a function $f: \mathbb{R}^n \rightarrow \mathbb{R}$ is twice differentiable in $\textbf{dom}(f)$. Then $f$ is convex if and only if $\forall x \in \textbf{dom}(f)$, $\nabla^2 f \succeq 0$ (positive semi-definite).
+\end{theorem}
+\subsection{Convergence Rate of Gradient Descent on Smooth Functions \cite{unconstrained}}
+If we perform gradient descent on a function $f$ which is convex and "smooth" (i.e. its gradient does not change too fast), and make the step size to be not too large, then we can ensure the gap between function value $f$ at step $k$ and the global minimum $p^{*}$ to be upper bounded by a value which is inversely proportional to $k$.\\
+
+Formally, we make the following assumptions:
+\begin{enumerate}[label=(\alph*)]
+\item $f: \mathbb{R}^n \rightarrow \mathbb{R}$ is convex and differentiable with $\textbf{dom}(f) = \mathbb{R}^n$
+\item $f$ is smooth\footnote{A function $f$ is smooth if and only if $\forall x, y \in \textbf{dom}(f)$, $f(y) \leq f(x) + \nabla f(x)^{T}(y-x) + \frac{\beta}{2}||x-y||^2$. This is equivalent to $\nabla f$ being Lipschitz continuous with parameter $\beta$, i.e. $\forall x, y \in \textbf{dom}(f)$, $||\nabla f(x) - \nabla f(y)|| \leq \beta ||x-y||$.} with parameter $\beta >0$
+\item The optimal value $p^{*}=\inf_x f(x)$ is finite and is attained at $x^{*}$.
+\end{enumerate}
+Then if we pick a constant step size $t$ s.t. $0 < t \leq \frac{1}{\beta}$ and perform updates $x^{+} = x - t \nabla f(x^{(k)})$ at each step, we have
+\begin{equation}
+\begin{split}
+f(x^+) & \leq f(x) + \nabla f(x)(x^+ -x)+\frac{\beta}{2}||x^+ - x||^2\\
+& = f(x) - t||\nabla f(x)||^2+t^2 \frac{\beta}{2}||\nabla f(x)||^2
+\end{split}
+\end{equation}
+When $0 < t \leq \frac{1}{\beta}$, we have
+\begin{equation}
+\begin{split}
+f(x^+) & \leq f(x) - \frac{t}{2}||\nabla f(x)||^2\\
+& \leq f(x^*) + \nabla f(x)^T (x - x^*) - \frac{t}{2}||\nabla f(x)||^2 (\textit{using first-order convexity condition})\\
+& = p^* + \frac{1}{2t}(||x - x^*||^2 - ||x - x^*-t \nabla f(x)||^2)\\
+& = p^* + \frac{1}{2t}(||x - x^*||^2 - ||x^+ - x^*||^2)
+\end{split}
+\end{equation}
+Take average of the above inequality over iterations $1,2,\cdots,k$:
+\begin{equation}
+\begin{split}
+\frac{1}{k} \sum_{i=1}^k f(x^{(i)})-p^* & \leq \frac{1}{k} \sum_{i=1}^k \frac{1}{2t}(||x^{(i)} - x^*||^2 - ||x^{(i+1)} - x^*||^2)\\
+& \leq \frac{1}{2tk}(||x^{(0)} - x^*||^2 - ||x^{(k+1)} - x^*||^2)\\
+& \leq \frac{1}{2tk}||x^{(0)} - x^*||^2
+\end{split}
+\end{equation}
+Since $f(x^{(k)})$ is non-increasing over iterations, we have
+\begin{equation}
+f(x^{(k)})-p^* \leq \frac{1}{2tk}||x^{(0)} - x^*||^2
+\end{equation}
+which shows the number of iterations $k$ taken to reach $f(x^{(k)})-p^* \leq \epsilon$ is $O(\frac{1}{\epsilon})$. 
+% \textcolor{red}{unfinished}
+\subsection{Properties of the Least Squares Problem}
+We have $\nabla_w ||y-Xw||^2 = 2X^{T}(Xw-y)$, and then $\nabla^2_w ||y-Xw||^2 = 2X^{T}X$, which is positive semi-definite. Thus from the second-order convexity condition, we can also show the convexity of the least-squares problem, which is a substitute of the use of first-order condition that was discussed in class. From this we can show using the first-order condition that the least squares problem only has one minimum, which is a global minimum.\\
+
+As for smoothness (or Lipschitz continuity), we have $$||\nabla_w ||y-Xw_1||^2 - \nabla_w ||y-Xw_2||^2|| \leq 2||X^{T}X|| ||w_1 - w_2||$$
+Thus if we limit the step size $t$ to be $0 \leq t \leq \frac{1}{2||X^{T}X||}$, we can get a convergence rate of $O(\frac{1}{k})$ with respect to the number of steps $k$.
+
+
+% \textbf{Note}: Please refer to Chapter 2 of Cover \& Thomas \cite{cover2012elements} for more information.
+
+% \subsection{Entropy}
+% \begin{definition}
+% Given a probability distribution $p$, the entropy of that distribution $H(p)$ is $\sum_{x} p(x) \log_2 \frac{1}{p(x)}$.\\
+% \end{definition}
+
+% Entropy is used to describe the amount of randomness for a given probability distribution. Note that $H(p) = \mathbb{E}_p (\log \frac{1}{p(x)})$\footnote{We omit the base of log from now on.} according to the convexity of $f(x) = \log \frac{1}{x}$.\\
+
+% The following theorem shows that for all distributions over $[k]$, the uniform distribution has the largest entropy.
+
+% \begin{theorem}
+% Given a distribution with $k$ elements, we have $0 \leq H(p) \leq \log(k)$.
+% \end{theorem}
+
+% \begin{proof}
+% According to the concavity of $f(x) = \log (x)$, $H(p) \leq \log (\mathbb{E}_p[\frac{1}{p(x)}]) = \log (\sum p(x) \frac{1}{p(x)}) = \log (k)$.
+% \end{proof}
+
+% \subsection{Kullback-Leibler (KL) Divergence}
+
+% \begin{definition}
+% Given two probability distributions $p$ and $q$, the KL divergence of these two distributions $KL(p,q)$ (or $D(p||q)$) is $\sum_x p(x)\log \frac{p(x)}{q(x)}$.
+
+% \end{definition}
+% If $q$ is a uniform distribution $u$ over $[k]$, then $D(p||u)=\sum p(x) \log (p(x)k)=\log (k)-H(p)$
+
+% \begin{theorem}
+% $D(p||q)$ is convex in $p$ and $q$, i.e. $\forall \lambda \in [0,1]$, $\lambda D(p_1||q_1)+(1- \lambda)D(p_2||q_2) \geq D(\lambda p_1+(1- \lambda)p_2||\lambda q_1+(1- \lambda)q_2)$.
+% \end{theorem}
+
+% \begin{theorem}
+% $\forall$ probability distributions $p,q$, $D(p||q) \geq 0$. 
+% \end{theorem}
+
+% \begin{proof}
+% \begin{equation}
+% \begin{split}
+% D(p||q) & = \sum_x p(x) \log \frac{p(x)}{q(x)}\\
+% & = \sum_x p(x) (- \log \frac{q(x)}{p(x)})\\
+% & \geq - \log \sum_x q(x) \\
+% & = 0
+% \end{split}
+% \end{equation}
+% The inequality holds due to the convexity of $f(x) = -log(x)$.
+% \end{proof}
+
+% \subsection{Conditional Entropy}
+
+% \begin{definition}
+% Given random variables $X$, $Y$ and distributions $\cX$, $\cY$, the conditional entropy of $X$ given $Y$ is 
+
+% \begin{equation}
+% \begin{split}
+% H(X|Y) & \triangleq \sum_y P(Y=y)H(X|Y=y) = \sum_y P(Y=y) \sum_x P(X=x|Y=y) \log \frac{1}{P(X=x|Y=y)}\\
+% & = \sum_{x,y} P(X=x, Y=y) \log \frac{P(Y=y)}{P(X=x, Y=y)}\\
+% & = \sum_{x,y} P(X=x, Y=y) \log \frac{1}{P(X=x, Y=y)} - \sum_y P(Y=y) \log \frac{1}{P(Y=y)}\\
+% & = H(X,Y) - H(Y)
+% \end{split}
+% \end{equation}
+
+
+
+% \end{definition}
+
+% From the above we know $H(X|Y)=H(X,Y)-H(Y)$. Intuitively, this means conditional entropy of $X$ given $Y$ captures the remaining randomness in $X$ after knowing $Y$. 
+
+% \begin{theorem}Chain Rule of Entropy:
+% $H(X,Y) = H(X) + H(Y|X) = H(Y) + H(X|Y)$
+% \end{theorem}
+
+% Specifically, if $X$ is independent of $Y$, then $P(X|Y) = P(X)$, $H(X,Y) = H(X) + H(Y)$. The latter equality is equivalent to $H(X|Y) = H(X)$.\\
+
+% For a series of random variables $X, Y, Z, ...$, we have $H(X, Y, Z) = H(X) + H(Y|X) + H(Z|X, Y) + ...$.
+
+% \subsection{Mutual Information}
+% Mutual information of two random variables $X$ and $Y$ tells how much information the random variable $Y$ (or $X$) gives about $X$ (or $Y$).
+
+% \begin{definition}
+% Mutual information of $X$ and $Y$ is \\
+% \begin{equation}
+% \begin{split}
+% I(X;Y) & \triangleq H(X) - H(X|Y) \\
+% &=H(Y) - H(Y|X)\\
+% &=H(X) + H(Y) -H(X,Y)
+% \end{split}
+% \end{equation}
+
+% \end{definition}
+
+% \begin{theorem}
+% $I(X;Y) \geq 0$.
+% \end{theorem}
+% \begin{proof}
+% \begin{equation}
+% \begin{split}
+% I(X;Y) & = H(X)+H(Y)-H(X,Y)\\
+% & = \sum_{x,y} P(X=x, Y=y) \log \frac{1}{P(X=x)} + \sum_{x,y} P(X=x, Y=y) \log \frac{1}{P(Y=y)} \\
+% & - \sum_{x,y} P(X=x, Y=y) \log \frac{1}{P(X=x, Y=y)}\\
+% & = \sum_{x,y} P(X=x, Y=y) \log \frac{P(X=x, Y=y)}{P(X=x)P(Y=y)} \geq 0
+% \end{split}
+% \end{equation}
+% The last inequality holds since the left-hand-side of the last line is actually the KL Divergence of probability distributions $P(X,Y)$ and $P(X)P(Y)$.
+% \end{proof}
+
+% \subsection{Multiway Classification and Channel Capacity}
+% First, let's have a look at the multiway classification problem. Its settings are:
+% \begin{enumerate}
+% \item Given $m$ possible messages (distributions) $p_1$, $p_2$, ..., $p_m$.
+% \item The true distribution $M$ is selected uniformly at random from $\{1, ...,m\}$.
+% \item Observe output $Y$ from source distribution $p_m$.
+% \item Predict $M$ from $\hat{M}(Y)$.
+% \end{enumerate}
+
+
+% This can be regarded as a message passing problem $M-Y-\hat{M}$. Generally, given the message passing procedure $X-Y-Z$. If this is a Markov chain, then we have $P(Z|Y) = P(Z|Y,X)$, $H(Z|Y) = H(Z|Y,X)$.
+
+% We can formulate a simple message passing problem, which is from one Bernoulli distribution $\{0,1\}$ to the other. Denote the random variables in the two distributions as $X$ and $Y$. If $P(Y=0|X=0)=P(Y=1|X=0)=\frac{1}{2}$, then no information can be sent from $X$ to $Y$; If $P(Y=0|X=0)=0.9$, $P(Y=1|X=0)=0.1$, then some amount of information can be sent.\\
+
+% We often use the mutual information $I(X;Y)$ to quantify the channel capacity.
+
+% \subsection{Data Processing Inequality}
+% \begin{theorem}
+% Given a data processing procedure $X-Y-Z$, we have $I(X;Z) \leq I(Y,Z)$ if this procedure is a Markov chain.
+% \end{theorem}
+
+% \begin{proof}
+% \begin{equation}
+% I(X;Z) = H(Z) - H(Z|X) \leq H(Z) - H(Z|X, Y) = H(Z)-H(Z|Y) = I(Y;Z) 
+% \end{equation}
+% \end{proof}
+
+
+% \subsection{Fano's Inequality}
+% \begin{definition}
+% Given a message passing procedure $M-Y-\hat{M}$, we have $$I(M;Y) \geq P(\text{correct}) \log(m-1) - \log 2$$
+% \end{definition}
+
+% \begin{proof}
+% Denote $\mathbb{C} \triangleq \mathbb{I} \{M=\hat{M}\}$.
+% \begin{equation}
+% \begin{split}
+% H(M, \mathbb{C}|\hat{M}) & = H(M|\hat{M}) + H(\mathbb{C}|M, \hat{M})\\
+% & = H(M|\hat{M})
+% \end{split}
+% \end{equation}
+% The last equality holds since we can get $\mathbb{C}$ unambiguously when knowing $M$ and $\hat{M}$. \\
+
+% Note that we also have 
+% \begin{equation}
+% \begin{split}
+% H(M,\mathbb{C}|\hat{M}) & = H(\mathbb{C}|\hat{M}) + H(M|\hat{M},\mathbb{C})\\
+% & \leq H(\mathbb{C}) + P(\mathbb{C}=1) H(M|\hat{M}, \mathbb{C}=1)\\
+% & + P(\mathbb{C}=0) H(M|\hat{M}, \mathbb{C}=0)
+% \end{split}
+% \end{equation}
+% Since $\mathbb{C}$ is a Bernoulli random variable, $H(\mathbb{C}) \leq \log 2$. Also, $H(M|\hat{M}, \mathbb{C}=1) = 0$ since we can know $M$ for sure given $\hat{M}$ and $\mathbb{C}$. $H(M|\hat{M}, \mathbb{C}=0) \leq \log(m-1)$ from concavity of $f(x) = log(x)$. Thus we have
+% \begin{equation}
+% \begin{split}
+% H(M|\hat{M}) \leq \log 2 + P(\text{error}) \log(m-1)
+% \end{split}
+% \end{equation}
+% Thus the mutual information
+% \begin{equation}
+% \begin{split}
+% I(M;\hat{M}) & = H(M) - H(M|\hat{M})\\
+% & \geq log(m) - P(\text{error}) \log (m-1) - \log 2\\
+% & \geq P(\text{correct}) \log(m-1) - \log 2
+% \end{split}
+% \end{equation}
+
+% Finally, using the data processing inequality, we have $$I(M; Y) \geq I(M;\hat{M}) \geq P(\text{correct}) \log(m-1) - \log 2$$
+% \end{proof}
+
+% In the next lecture, we are going to show that "testing" a multiway classification problem not more difficult than "learning" it, in the sense that $n_{\text{learn}} \geq n_{\text{test}}$, in which $n$ denotes the number of required samples.
+
+% % \begin{definition}
+% % A discrete distribution $P$ over $\cX$ is a function from a countable set $\cX$ to $\RR_+$, such that $\sum_{x\in\cX} P(x) =1$. 
+% % \end{definition}
+
+% % \begin{theorem}
+% % % Let $X$ be a Bernoulli random variable, with $\Probof{X=0}=1-p$. Then
+% % dd
+% % \begin{align}
+% % \EE[X]=p.
+% % \end{align}
+% % \end{theorem}
+
+% % \begin{proof}
+% % The expected value of a discrete random variable is:
+% % \begin{align}
+% % \EE[X] &= \sum_{x\in\cX} x\cdot P(x)\\
+% % &= 0\cdot (1-p) + 1\cdot p = p.
+% % \end{align}
+% % \end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\printbibliography
+\end{document}
+
