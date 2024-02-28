@@ -9,7 +9,7 @@ This is a repository that contains the list of links of the repositories of the 
  - In the repository you just forked, click Create new file.
  - Name it as (The name of your project).md.
  - Type the link of the repository of your project in the following format:
- [The name of your project](The url of the repository) by your names. See ExampleProject.md as an example by editing it (by clicking the pen icon).
+ [The name of your project](The url of the repository) by your names. See **ExampleProject.md** as an example by editing it (by clicking the pen icon).
  - Commit new file.
  - Check if it has the same format as our example.
  3. Create a pull request from a fork: 
