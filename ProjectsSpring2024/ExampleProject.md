@@ -1,7 +1,7 @@
-Project Name: [The name of your project](The url of the repository)
+Project Name: [Predicting Business Closures Using Yelp Reviews](https://github.com/lincychen/ORIE4741-Project)
 
-Project type: Data analysis/Algorithm development/Theoretical project
+Project type: Data analysis
 
-Group Members: Name (NetID), Name (NetID), Name (NetID)
+Group Members: Alyssa Yam (aly23), Lincy Chen (lyc26)
 
-Course code: 4741/5741
+Course code: 4741
