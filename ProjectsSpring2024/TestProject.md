@@ -1,4 +1,4 @@
-Project Name: [TestProject](The url of the repository)
+Project Name: [TestProject](https://github.com/haiyun-he/TestProject)
 
 Project type: Data analysis/Algorithm development/Theoretical project
 
