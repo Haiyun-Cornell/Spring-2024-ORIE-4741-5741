@@ -1,4 +1,4 @@
-Project Name: [Online Shopper Purchasing Intention](https://github.com/YuanqiSun0102/ORIE5741Project.git))
+Project Name: [Online Shopper Purchasing Intention](https://github.com/YuanqiSun0102/ORIE5741Project.git)
 
 Project type: Data analysis
 
