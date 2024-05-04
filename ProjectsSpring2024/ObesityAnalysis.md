@@ -1,4 +1,4 @@
-Project Name: [Mental Health Problem in Crisis](https://github.com/Yanni-Olivia-Zhang/ORIE5741)
+Project Name: [Obesity Analysis](https://github.com/Yanni-Olivia-Zhang/ORIE5741)
 
 Project type: Data analysis
 
