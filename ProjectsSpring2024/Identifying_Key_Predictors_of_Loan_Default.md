@@ -1,7 +1,7 @@
 Project Name: [Identifying Key Predictors of Loan Default](https://github.com/joshyzma/Identifying-Key-Predictors-of-Loan-Default-))
 
-Project type: Data analysis/Algorithm development/Theoretical project
+Project type: Data analysis
 
-Group Members: Name (NetID), Name (NetID), Name (NetID)
+Group Members: Yuanzhi Ma (ym533), Xiaotong Li (xl939), Jiachen Ma (jm2833)
 
-Course code: 4741/5741
+Course code: 5741
