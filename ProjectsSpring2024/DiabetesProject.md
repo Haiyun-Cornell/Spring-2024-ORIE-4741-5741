@@ -1,4 +1,4 @@
-Project Name: [DiabetesProject]((https://github.com/ZhaohanXing/ORIE5741_Project))
+Project Name: [DiabetesProject](https://github.com/ZhaohanXing/ORIE5741_Project)
 
 Project type: Data analysis
 
